@@ -7,9 +7,9 @@ from telethon.tl.types import PeerChannel
 
 class Journal:
     app: TelegramClient = None
-    channel_id: str = None
-    api_hash: str = None
-    api_id: str = None
+    channel_id: None | str = None
+    api_hash: None | str = None
+    api_id: None | str = None
 
     def initialize(self):
         """Load .env file with various configurations"""
@@ -17,12 +17,12 @@ class Journal:
         self.channel_id = os.getenv("CHANNEL_ID")
         self.api_hash = os.getenv("API_HASH")
         self.api_id = os.getenv("API_ID")
+        if not self.api_id or not self.api_hash:
+            print("Please provide a valid API ID and API Hash.")
+            exit(-1)
         self.create_session()
     
     def create_session(self):
-        if not self.api_id or not self.api_hash:
-            print("Please provide a valid API ID and API hash.")
-            exit(-1)
         current_path: str = os.path.dirname(os.path.realpath(__file__))
         self.app = TelegramClient(f'{current_path}/journal', self.api_id, self.api_hash)
         self.app.parse_mode = 'md'
