@@ -3,7 +3,6 @@ import os
 import subprocess
 from dotenv import load_dotenv as dotenv
 from telethon import TelegramClient
-import asyncio
 from telethon.tl.types import PeerChannel
 
 class Journal:
@@ -12,20 +11,23 @@ class Journal:
     api_hash: str = None
     api_id: str = None
 
-    async def initialize(self):
+    def initialize(self):
         """Load .env file with various configurations"""
         dotenv()
         self.channel_id = os.getenv("CHANNEL_ID")
         self.api_hash = os.getenv("API_HASH")
         self.api_id = os.getenv("API_ID")
-        await self.create_session()
+        self.create_session()
     
-    async def create_session(self):
+    def create_session(self):
         if not self.api_id or not self.api_hash:
             print("Please provide a valid API ID and API hash.")
             exit(-1)
-        self.app = TelegramClient('journal', self.api_id, self.api_hash)
+        current_path: str = os.path.dirname(os.path.realpath(__file__))
+        self.app = TelegramClient(f'{current_path}/journal', self.api_id, self.api_hash)
         self.app.parse_mode = 'md'
+    
+    async def connect(self):
         await self.app.start()
     
     async def send_message(self, content: str):
@@ -51,13 +53,13 @@ class Journal:
         except FileNotFoundError:
             exit()
 
-async def main():
-    journal: Journal = Journal()
-    await journal.initialize()
+async def main(journal: Journal):
+    await journal.connect()
     text: str = journal.create_journal()
     await journal.send_message(text)
 
 # Entry point of the script
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(main())
+    journal: Journal = Journal()
+    journal.initialize()
+    journal.app.loop.run_until_complete(main(journal))
